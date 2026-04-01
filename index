@@ -38,3 +38,485 @@
     .card {
       background: white;
       border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #4b0082;
+      margin-top: 0;
+    }
+
+    input, button {
+      padding: 12px;
+      margin: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    input {
+      width: 200px;
+    }
+
+    button {
+      background: #7b2cbf;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #5a189a;
+    }
+
+    .danger {
+      background: #d90429;
+    }
+
+    .danger:hover {
+      background: #ef233c;
+    }
+
+    .edit {
+      background: #2a9d8f;
+    }
+
+    .edit:hover {
+      background: #1d7f73;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      overflow-x: auto;
+      display: block;
+    }
+
+    th {
+      background: #7b2cbf;
+      color: white;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .countdown {
+      text-align: center;
+      font-size: 22px;
+      color: #d90429;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .student-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    .rank {
+      font-size: 22px;
+      color: #7b2cbf;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>ระบบตรวจสอบผลการเรียนออนไลน์</h1>
+    <p>โรงเรียนตัวอย่างวิทยา</p>
+  </header>
+
+  <div class="container">
+
+    <div class="card">
+      <h2>เข้าสู่ระบบแอดมิน</h2>
+      <input type="password" id="adminPass" placeholder="รหัสผ่านแอดมิน">
+      <button onclick="loginAdmin()">เข้าสู่ระบบ</button>
+
+      <div id="adminPanel" class="hidden">
+        <h2>จัดการผลการเรียน</h2>
+
+        <input type="text" id="studentCode" placeholder="รหัสนักเรียน">
+        <input type="text" id="studentName" placeholder="ชื่อนักเรียน">
+
+        <button onclick="addStudent()">เพิ่มนักเรียน</button>
+        <button onclick="exportCSV()">ดาวน์โหลด CSV</button>
+
+        <table id="studentTable">
+          <thead>
+            <tr>
+              <th>รหัส</th>
+              <th>ชื่อ</th>
+              <th>GPA</th>
+              <th>อันดับ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ตรวจสอบผลการเรียน</h2>
+
+      <div class="countdown" id="countdownBox"></div>
+
+      <p style="text-align:center;">สามารถดูผลได้ตั้งแต่เวลา 21:00 น.</p>
+
+      <div style="text-align:center;">
+        <input type="text" id="searchCode" placeholder="กรอกรหัสนักเรียน">
+        <button onclick="checkGrade()">ดูผลการเรียน</button>
+      </div>
+
+      <div id="resultBox"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const adminPassword = "admin123";
+
+    let students = [
+      {
+        code: "S001",
+        name: "มายู",
+        grades: {
+          "พละ": 4,
+          "ไทย": 3.5,
+          "สังคม": 4,
+          "คณิต": 3,
+          "จีน": 4,
+          "สุขศึกษา": 4,
+          "ลูกเสือ": 4,
+          "โครงงาน": 3.5,
+          "วิชาเพิ่มเติม": 4,
+          "วิชากิจกรรม": 4,
+          "วิทยาศาสตร์": 3,
+          "Math": 3.5,
+          "นาฏศิลป์": 4,
+          "ดนตรี": 4,
+          "ศิลปะ": 4,
+          "การงานอาชีพ": 4,
+          "Science": 3,
+          "Social": 4,
+          "Physical": 3.5,
+          "Chemistry": 3
+        }
+      },
+      {
+        code: "S002",
+        name: "เถิด",
+        grades: {
+          "พละ": 3,
+          "ไทย": 2.5,
+          "สังคม": 3,
+          "คณิต": 2,
+          "จีน": 3,
+          "สุขศึกษา": 4,
+          "ลูกเสือ": 4,
+          "โครงงาน": 3,
+          "วิชาเพิ่มเติม": 3,
+          "วิชากิจกรรม": 4,
+          "วิทยาศาสตร์": 2.5,
+          "Math": 2,
+          "นาฏศิลป์": 4,
+          "ดนตรี": 3,
+          "ศิลปะ": 3,
+          "การงานอาชีพ": 3,
+          "Science": 2,
+          "Social": 3,
+          "Physical": 3,
+          "Chemistry": 2
+        }
+      },
+      {
+        code: "S003",
+        name: "อามี่",
+        grades: {
+          "พละ": 4,
+          "ไทย": 4,
+          "สังคม": 4,
+          "คณิต": 4,
+          "จีน": 4,
+          "สุขศึกษา": 4,
+          "ลูกเสือ": 4,
+          "โครงงาน": 4,
+          "วิชาเพิ่มเติม": 4,
+          "วิชากิจกรรม": 4,
+          "วิทยาศาสตร์": 4,
+          "Math": 4,
+          "นาฏศิลป์": 4,
+          "ดนตรี": 4,
+          "ศิลปะ": 4,
+          "การงานอาชีพ": 4,
+          "Science": 4,
+          "Social": 4,
+          "Physical": 4,
+          "Chemistry": 4
+        }
+      },
+      {
+        code: "S004",
+        name: "จีโน่",
+        grades: {
+          "พละ": 2.5,
+          "ไทย": 3,
+          "สังคม": 2.5,
+          "คณิต": 2,
+          "จีน": 3,
+          "สุขศึกษา": 3,
+          "ลูกเสือ": 4,
+          "โครงงาน": 3,
+          "วิชาเพิ่มเติม": 2.5,
+          "วิชากิจกรรม": 4,
+          "วิทยาศาสตร์": 2,
+          "Math": 2,
+          "นาฏศิลป์": 4,
+          "ดนตรี": 3,
+          "ศิลปะ": 3,
+          "การงานอาชีพ": 3,
+          "Science": 2,
+          "Social": 2.5,
+          "Physical": 3,
+          "Chemistry": 2
+        }
+      }
+    ];
+
+    function calculateGPA(student) {
+      const grades = Object.values(student.grades);
+      const total = grades.reduce((a, b) => a + b, 0);
+      return (total / grades.length).toFixed(2);
+    }
+
+    function updateRanks() {
+      students.forEach(student => {
+        student.gpa = calculateGPA(student);
+      });
+
+      students.sort((a, b) => b.gpa - a.gpa);
+
+      students.forEach((student, index) => {
+        student.rank = index + 1;
+      });
+
+      updateTable();
+    }
+
+    function updateTable() {
+      const tbody = document.querySelector("#studentTable tbody");
+      tbody.innerHTML = "";
+
+      students.forEach((student, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${student.code}</td>
+            <td>${student.name}</td>
+            <td>${student.gpa}</td>
+            <td>${student.rank}</td>
+            <td>
+              <button class="edit" onclick="editStudent(${index})">แก้ไข</button>
+              <button class="danger" onclick="deleteStudent(${index})">ลบ</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function loginAdmin() {
+      const pass = document.getElementById("adminPass").value;
+
+      if (pass === adminPassword) {
+        document.getElementById("adminPanel").classList.remove("hidden");
+        alert("เข้าสู่ระบบสำเร็จ");
+      } else {
+        alert("รหัสผ่านไม่ถูกต้อง");
+      }
+    }
+
+    function addStudent() {
+      const code = document.getElementById("studentCode").value.trim();
+      const name = document.getElementById("studentName").value.trim();
+
+      if (!code || !name) {
+        alert("กรุณากรอกรหัสและชื่อ");
+        return;
+      }
+
+      const duplicate = students.find(student => student.code === code);
+
+      if (duplicate) {
+        alert("รหัสนี้ถูกใช้แล้ว");
+        return;
+      }
+
+      students.push({
+        code,
+        name,
+        grades: {
+          "พละ": 0,
+          "ไทย": 0,
+          "สังคม": 0,
+          "คณิต": 0,
+          "จีน": 0,
+          "สุขศึกษา": 0,
+          "ลูกเสือ": 0,
+          "โครงงาน": 0,
+          "วิชาเพิ่มเติม": 0,
+          "วิชากิจกรรม": 0,
+          "วิทยาศาสตร์": 0,
+          "Math": 0,
+          "นาฏศิลป์": 0,
+          "ดนตรี": 0,
+          "ศิลปะ": 0,
+          "การงานอาชีพ": 0,
+          "Science": 0,
+          "Social": 0,
+          "Physical": 0,
+          "Chemistry": 0
+        }
+      });
+
+      updateRanks();
+
+      document.getElementById("studentCode").value = "";
+      document.getElementById("studentName").value = "";
+    }
+
+    function editStudent(index) {
+      const student = students[index];
+
+      const newName = prompt("แก้ไขชื่อ", student.name);
+
+      if (newName !== null) {
+        student.name = newName;
+      }
+
+      for (let subject in student.grades) {
+        const newGrade = prompt(`แก้ไขเกรดวิชา ${subject}`, student.grades[subject]);
+
+        if (newGrade !== null) {
+          student.grades[subject] = parseFloat(newGrade) || 0;
+        }
+      }
+
+      updateRanks();
+    }
+
+    function deleteStudent(index) {
+      if (confirm("ต้องการลบนักเรียนคนนี้หรือไม่")) {
+        students.splice(index, 1);
+        updateRanks();
+      }
+    }
+
+    function exportCSV() {
+      let csv = "รหัส,ชื่อ,GPA,อันดับ\n";
+
+      students.forEach(student => {
+        csv += `${student.code},${student.name},${student.gpa},${student.rank}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "ผลการเรียน.csv";
+      link.click();
+    }
+
+    function updateCountdown() {
+      const countdownBox = document.getElementById("countdownBox");
+
+      const now = new Date();
+      const target = new Date();
+
+      target.setHours(21, 0, 0, 0);
+
+      if (now >= target) {
+        countdownBox.innerHTML = "เปิดให้ดูผลการเรียนแล้ว";
+        return;
+      }
+
+      const diff = target - now;
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      countdownBox.innerHTML = `เหลือเวลาอีก ${hours} ชั่วโมง ${minutes} นาที ${seconds} วินาที`;
+    }
+
+    function checkGrade() {
+      const now = new Date();
+      const currentHour = now.getHours();
+
+      if (currentHour < 21) {
+        document.getElementById("resultBox").innerHTML = `
+          <div class="student-info">
+            ยังไม่สามารถดูผลได้ กรุณารอเวลา 21:00 น.
+          </div>
+        `;
+        return;
+      }
+
+      const code = document.getElementById("searchCode").value.trim();
+      const student = students.find(student => student.code === code);
+
+      if (!student) {
+        document.getElementById("resultBox").innerHTML = `
+          <div class="student-info">ไม่พบรหัสนักเรียนนี้</div>
+        `;
+        return;
+      }
+
+      let table = `
+        <div class="student-info">
+          <h3>${student.name}</h3>
+          <p>รหัสนักเรียน: ${student.code}</p>
+          <p class="rank">GPA: ${student.gpa} | อันดับที่ ${student.rank}</p>
+
+          <table>
+            <tr>
+              <th>วิชา</th>
+              <th>เกรด</th>
+            </tr>
+      `;
+
+      for (let subject in student.grades) {
+        table += `
+          <tr>
+            <td>${subject}</td>
+            <td>${student.grades[subject]}</td>
+          </tr>
+        `;
+      }
+
+      table += `</table></div>`;
+
+      document.getElementById("resultBox").innerHTML = table;
+    }
+
+    updateRanks();
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+  </script>
+
+</body>
+</html>
